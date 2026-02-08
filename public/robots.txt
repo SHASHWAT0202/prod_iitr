@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Disallow API routes from indexing
+Disallow: /api/
+
+# Allow main pages
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /login
+
+# Sitemap
+Sitemap: https://leadsense-ai.vercel.app/sitemap.xml
