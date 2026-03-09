@@ -39,11 +39,11 @@ const getScoreColor = (s: number | undefined) => {
 };
 
 const scoreDimensions = [
-  { key: 'intentStrength',   label: 'Intent Strength', max: 30, color: 'from-blue-500 to-indigo-500',   desc: 'How strong is the buying signal' },
-  { key: 'freshness',        label: 'Freshness',       max: 25, color: 'from-emerald-500 to-teal-500',  desc: 'How recent is the intelligence' },
+  { key: 'intentStrength',   label: 'Intent Strength', max: 35, color: 'from-blue-500 to-indigo-500',   desc: 'How strong is the buying signal' },
+  { key: 'freshness',        label: 'Freshness',       max: 20, color: 'from-emerald-500 to-teal-500',  desc: 'How recent is the intelligence' },
   { key: 'companySizeProxy', label: 'Company Scale',   max: 20, color: 'from-purple-500 to-violet-500', desc: 'Estimated business size fit' },
-  { key: 'sourceTrust',      label: 'Source Trust',     max: 15, color: 'from-amber-500 to-orange-500',  desc: 'Reliability of the source' },
-  { key: 'geoRelevance',     label: 'Geo Relevance',   max: 10, color: 'from-rose-500 to-pink-500',     desc: 'Location-based relevance' },
+  { key: 'trustScore',       label: 'Source Trust',     max: 15, color: 'from-amber-500 to-orange-500',  desc: 'Reliability of the source' },
+  { key: 'geographyMatch',   label: 'Geo Relevance',   max: 10, color: 'from-rose-500 to-pink-500',     desc: 'Location-based relevance' },
 ];
 
 const formatDate = (ts: number | undefined) => {
@@ -323,11 +323,11 @@ export default function LeadDossier({ lead, onAction }: LeadDossierProps) {
 
     sectionTitle('SCORE BREAKDOWN');
     const dims = [
-      { name: 'Intent Strength', val: scoreBreakdown.intentStrength || 0, max: 30 },
-      { name: 'Freshness',       val: scoreBreakdown.freshness || 0,       max: 25 },
+      { name: 'Intent Strength', val: scoreBreakdown.intentStrength || 0, max: 35 },
+      { name: 'Freshness',       val: scoreBreakdown.freshness || 0,       max: 20 },
       { name: 'Company Scale',   val: scoreBreakdown.companySizeProxy || 0, max: 20 },
-      { name: 'Source Trust',    val: scoreBreakdown.sourceTrust || 0,     max: 15 },
-      { name: 'Geo Relevance',  val: scoreBreakdown.geoRelevance || 0,    max: 10 },
+      { name: 'Source Trust',    val: scoreBreakdown.trustScore || 0,     max: 15 },
+      { name: 'Geo Relevance',  val: scoreBreakdown.geographyMatch || 0,    max: 10 },
     ];
     dims.forEach((d) => {
       ensureSpace(10);

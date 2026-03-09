@@ -37,6 +37,38 @@ const users: UserLike[] = [
   { id: 'u4', role: 'sales', region: 'East' },
 ];
 
+// Map Indian states/cities to sales regions
+const GEO_REGION_MAP: Record<string, string> = {
+  // North
+  'delhi': 'North', 'delhi ncr': 'North', 'new delhi': 'North', 'haryana': 'North',
+  'punjab': 'North', 'uttar pradesh': 'North', 'up': 'North', 'uttarakhand': 'North',
+  'himachal pradesh': 'North', 'jammu': 'North', 'kashmir': 'North', 'chandigarh': 'North',
+  'lucknow': 'North', 'jaipur': 'North', 'noida': 'North', 'gurgaon': 'North', 'gurugram': 'North',
+  // West
+  'maharashtra': 'West', 'mumbai': 'West', 'pune': 'West', 'gujarat': 'West',
+  'rajasthan': 'West', 'goa': 'West', 'madhya pradesh': 'West', 'mp': 'West',
+  'ahmedabad': 'West', 'surat': 'West', 'nagpur': 'West', 'indore': 'West', 'bhopal': 'West',
+  // South
+  'tamil nadu': 'South', 'karnataka': 'South', 'kerala': 'South', 'telangana': 'South',
+  'andhra pradesh': 'South', 'ap': 'South', 'chennai': 'South', 'bangalore': 'South',
+  'bengaluru': 'South', 'hyderabad': 'South', 'kochi': 'South', 'coimbatore': 'South',
+  'visakhapatnam': 'South', 'vizag': 'South', 'thiruvananthapuram': 'South',
+  // East
+  'west bengal': 'East', 'kolkata': 'East', 'bihar': 'East', 'odisha': 'East',
+  'jharkhand': 'East', 'chhattisgarh': 'East', 'assam': 'East', 'sikkim': 'East',
+  'meghalaya': 'East', 'tripura': 'East', 'manipur': 'East', 'mizoram': 'East',
+  'nagaland': 'East', 'arunachal pradesh': 'East', 'patna': 'East', 'ranchi': 'East',
+  'bhubaneswar': 'East', 'guwahati': 'East', 'raipur': 'East',
+  // Direct matches
+  'north': 'North', 'south': 'South', 'east': 'East', 'west': 'West',
+  'pan india': 'North', // Default for pan-India leads
+};
+
+function resolveRegion(geo: string): string | null {
+  if (!geo) return null;
+  return GEO_REGION_MAP[geo.toLowerCase().trim()] || null;
+}
+
 // Scoring weights (total = 100)
 const WEIGHTS = {
   intentStrength: 35,  // How strong is the buying signal?
@@ -128,18 +160,26 @@ export function scoreLead(lead: LeadLike): { score: number; breakdown: Record<st
   breakdown.companySizeProxy = Math.round(sizeScore);
 
   // 4. Trust Score (0-15)
-  const trustScore = (lead.trust || 0.5) * WEIGHTS.trustScore;
+  // Trust is stored as 0-100 percentage; normalize to 0-1 for scoring
+  const rawTrust = lead.trust || 0;
+  const normalizedTrust = rawTrust > 1 ? rawTrust / 100 : rawTrust;
+  const trustScore = normalizedTrust * WEIGHTS.trustScore;
   breakdown.trustScore = Math.round(trustScore);
-  if ((lead.trust || 0) >= 0.9) {
+  if (normalizedTrust >= 0.9) {
     explanation.push(`✓ Verified source: ${lead.source}`);
+  } else if (normalizedTrust >= 0.7) {
+    explanation.push(`◐ Trusted source: ${lead.source}`);
   }
 
   // 5. Geography Match (0-10)
-  const assigned = users.find(u => u.region === lead.geo && u.role === 'sales');
-  const geoScore = assigned ? WEIGHTS.geographyMatch : WEIGHTS.geographyMatch * 0.5;
+  const resolvedRegion = resolveRegion(lead.geo || '');
+  const assigned = resolvedRegion
+    ? users.find(u => u.region === resolvedRegion && u.role === 'sales')
+    : null;
+  const geoScore = assigned ? WEIGHTS.geographyMatch : WEIGHTS.geographyMatch * 0.3;
   breakdown.geographyMatch = Math.round(geoScore);
   if (assigned) {
-    explanation.push(`📍 Territory match: ${lead.geo}`);
+    explanation.push(`📍 Territory match: ${lead.geo} → ${resolvedRegion}`);
   }
 
   // Total
