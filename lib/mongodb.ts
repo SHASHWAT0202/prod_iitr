@@ -24,6 +24,7 @@ export interface DbCollections {
   analytics: Collection;
   feedback: Collection;
   learnedWeights: Collection;
+  apiUsage: Collection;
 }
 
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
@@ -57,6 +58,7 @@ export async function getCollections(): Promise<DbCollections> {
     analytics: db.collection('analytics'),
     feedback: db.collection('feedback'),
     learnedWeights: db.collection('learned_weights'),
+    apiUsage: db.collection('api_usage'),
   };
 }
 

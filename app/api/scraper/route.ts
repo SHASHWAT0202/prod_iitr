@@ -1,7 +1,7 @@
 /**
  * API Route: /api/scraper
- * 24/7 Web Scraper with REAL NewsAPI integration
- * This endpoint can be called by Vercel Cron, Railway Cron, or external services
+ * Multi-Source Web Scraper with Google RSS, NewsData.io, MediaStack, and NewsAPI
+ * Sources are rate-limited to respect monthly quotas.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,20 +9,13 @@ import { getCollections, initializeDatabase } from '@/lib/mongodb';
 import { inferProductNeeds } from '@/lib/openai';
 import { scoreLead, shouldNotifyUrgent, normalizeName } from '@/lib/scoring';
 import { generateHighPriorityLeadEmail } from '@/lib/email-templates';
+import { runAllScrapers, getApiUsageStats, generateSignalHash, RawSignal } from '@/lib/multi-scraper';
 import nodemailer from 'nodemailer';
-import crypto from 'crypto';
 
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886';
-
-// Generate unique hash for signal deduplication
-function generateSignalHash(companyName: string, text: string): string {
-  const normalized = `${companyName.toLowerCase().trim()}-${text.toLowerCase().trim().substring(0, 150)}`;
-  return crypto.createHash('md5').update(normalized).digest('hex');
-}
 
 // Email transporter configuration
 const transporter = nodemailer.createTransport({
@@ -177,210 +170,6 @@ function getDSRegion(geo: string): string {
   return dsRegionMapping[geo] || `${geo} DS Region`;
 }
 
-// Extract geo from article text
-function extractGeo(text: string): string {
-  const lowerText = text.toLowerCase();
-  for (const [key, value] of Object.entries(geoMapping)) {
-    if (lowerText.includes(key)) return value;
-  }
-  return 'Pan India';
-}
-
-// Extract company name from article (simplified heuristic)
-function extractCompanyName(title: string, description: string): string | null {
-  const text = `${title} ${description}`;
-  
-  // Common Indian company patterns
-  const patterns = [
-    /\b(Tata|Reliance|Adani|JSW|Larsen|L&T|Infosys|Wipro|HCL|Mahindra|Bajaj|Hindustan|Indian Oil|ONGC|NTPC|BHEL|Coal India|SAIL|GAIL|BPCL|IOC|Air India|Maruti|Hero|TVS|Ashok Leyland|Ultratech|ACC|Ambuja|Dalmia|JK Cement|Vedanta|Hindalco|Jindal|SpiceJet|IndiGo|Zomato|Swiggy|Flipkart|Ola|NHAI|DMRC|Metro Rail|Airport|Railways)\b[^,.]*/gi,
-    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:Limited|Ltd|Corporation|Corp|Industries|Group|Pvt|Private|Company)\b/g,
-  ];
-  
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match && match[0]) {
-      return match[0].trim().replace(/\s+/g, ' ');
-    }
-  }
-  return null;
-}
-
-// Fetch REAL news from NewsAPI
-async function fetchRealNews(): Promise<Array<{
-  company_name: string;
-  text: string;
-  source: string;
-  source_type: 'news' | 'tender';
-  trust: number;
-  geo: string;
-  url: string;
-}>> {
-  if (!NEWSAPI_KEY) {
-    console.log('⚠️ NewsAPI key not found, using fallback data');
-    return fallbackSignals;
-  }
-
-  try {
-    // Search for Indian business news about expansions, contracts, tenders
-    const queries = [
-      'India expansion plant factory',
-      'India tender contract infrastructure',
-      'India fleet logistics transport',
-      'Indian company crore investment',
-    ];
-    
-    const randomQuery = queries[Math.floor(Math.random() * queries.length)];
-    
-    const response = await fetch(
-      `https://newsapi.org/v2/everything?` +
-      `q=${encodeURIComponent(randomQuery)}&` +
-      `language=en&` +
-      `sortBy=publishedAt&` +
-      `pageSize=10&` +
-      `apiKey=${NEWSAPI_KEY}`,
-      { next: { revalidate: 300 } } // Cache for 5 minutes
-    );
-
-    if (!response.ok) {
-      console.error('NewsAPI error:', response.status, await response.text());
-      return fallbackSignals;
-    }
-
-    const data = await response.json();
-    
-    if (!data.articles || data.articles.length === 0) {
-      console.log('No articles found, using fallback');
-      return fallbackSignals;
-    }
-
-    console.log(`📰 Fetched ${data.articles.length} real news articles from NewsAPI`);
-
-    // Transform NewsAPI articles to our signal format
-    const signals = data.articles
-      .map((article: any) => {
-        const companyName = extractCompanyName(article.title || '', article.description || '');
-        if (!companyName) return null;
-
-        const fullText = `${article.title || ''}. ${article.description || ''}`;
-        
-        return {
-          company_name: companyName,
-          text: fullText.substring(0, 500),
-          source: article.source?.name || 'News',
-          source_type: 'news' as const,
-          trust: article.source?.name?.includes('Times') || article.source?.name?.includes('Standard') ? 90 : 85,
-          geo: extractGeo(fullText),
-          url: article.url || '',
-        };
-      })
-      .filter((s: any) => s !== null);
-
-    if (signals.length === 0) {
-      console.log('No valid signals extracted, using fallback');
-      return fallbackSignals;
-    }
-
-    return signals;
-  } catch (error) {
-    console.error('Error fetching news:', error);
-    return fallbackSignals;
-  }
-}
-
-// Fallback signals when NewsAPI is unavailable
-const fallbackSignals = [
-  {
-    company_name: 'Larsen & Toubro',
-    text: 'L&T wins ₹7,000 crore contract for Mumbai-Ahmedabad bullet train civil works. Massive construction equipment and fuel requirements expected.',
-    source: 'Economic Times',
-    source_type: 'news' as const,
-    trust: 95,
-    geo: 'Maharashtra',
-    url: 'https://economictimes.com/lt-bullet-train',
-  },
-  {
-    company_name: 'Indian Oil Corporation',
-    text: 'IOC to set up new refinery in Nagapattinam with 9 MTPA capacity. Seeking equipment suppliers and industrial lubricants.',
-    source: 'Business Standard',
-    source_type: 'news' as const,
-    trust: 92,
-    geo: 'Tamil Nadu',
-    url: 'https://business-standard.com/ioc-refinery',
-  },
-  {
-    company_name: 'Ashok Leyland',
-    text: 'Ashok Leyland to manufacture 10,000 electric buses. Requires industrial lubricants for manufacturing facility expansion.',
-    source: 'Auto Car India',
-    source_type: 'news' as const,
-    trust: 88,
-    geo: 'Chennai',
-    url: 'https://autocarindia.com/ashok-leyland',
-  },
-  {
-    company_name: 'NHAI',
-    text: 'NHAI invites tenders for Bharatmala Phase 2 - 5,000 km road construction. Bitumen and diesel suppliers needed.',
-    source: 'Government Tender Portal',
-    source_type: 'tender' as const,
-    trust: 98,
-    geo: 'Pan India',
-    url: 'https://nhai.gov.in/tender',
-  },
-  {
-    company_name: 'JSW Steel',
-    text: 'JSW Steel Dolvi plant expansion announcement. ₹15,000 crore investment for capacity increase to 10 MTPA.',
-    source: 'Moneycontrol',
-    source_type: 'news' as const,
-    trust: 90,
-    geo: 'Maharashtra',
-    url: 'https://moneycontrol.com/jsw-steel',
-  },
-  {
-    company_name: 'Hindalco Industries',
-    text: 'Hindalco to set up new aluminium smelter in Odisha. Industrial fuel and lubricant requirements for heavy machinery.',
-    source: 'Business Line',
-    source_type: 'news' as const,
-    trust: 89,
-    geo: 'Odisha',
-    url: 'https://thehindubusinessline.com/hindalco',
-  },
-  {
-    company_name: 'Zomato',
-    text: 'Zomato expands delivery fleet with 50,000 new vehicles. Looking for fuel card partnerships and bulk diesel supply.',
-    source: 'Tech Crunch India',
-    source_type: 'news' as const,
-    trust: 85,
-    geo: 'Pan India',
-    url: 'https://techcrunch.com/zomato-fleet',
-  },
-  {
-    company_name: 'Cochin Shipyard',
-    text: 'Cochin Shipyard wins contract to build 6 Next-Gen Offshore Patrol Vessels. Marine fuel and lubricant supply tender open.',
-    source: 'Defense News',
-    source_type: 'tender' as const,
-    trust: 94,
-    geo: 'Kerala',
-    url: 'https://defensenews.in/cochin-shipyard',
-  },
-  {
-    company_name: 'Air India',
-    text: 'Air India fleet modernization: 470 new aircraft order. Seeking ATF supply partnerships at 20+ airports.',
-    source: 'Aviation Times',
-    source_type: 'news' as const,
-    trust: 93,
-    geo: 'Pan India',
-    url: 'https://aviationtimes.com/air-india',
-  },
-  {
-    company_name: 'Ultratech Cement',
-    text: 'Ultratech Cement to add 22 MTPA capacity across India. Furnace oil and diesel requirements for new plants.',
-    source: 'Cement World',
-    source_type: 'news' as const,
-    trust: 87,
-    geo: 'Pan India',
-    url: 'https://cementworld.com/ultratech',
-  },
-];
-
 // Send notification to all sales users - ONLY for HIGH PRIORITY leads (score >= 80)
 async function notifyAllSalesUsers(lead: any, notifications: any, users: any) {
   const isHighPriority = lead.score >= 80;
@@ -456,57 +245,64 @@ async function notifyAllSalesUsers(lead: any, notifications: any, users: any) {
   return Promise.all(notificationPromises);
 }
 
-// GET - Run scraper (can be triggered by cron)
+// GET - Run multi-source scraper (can be triggered by cron)
 export async function GET(request: NextRequest) {
   try {
     await initializeDatabase();
-    const { leads, notifications, users, analytics } = await getCollections();
+    const { leads, notifications, users, analytics, apiUsage } = await getCollections();
     const { searchParams } = new URL(request.url);
     const forceNew = searchParams.get('force') === 'true';
-    const useRealNews = searchParams.get('real') !== 'false'; // Default to real news
+    const usePaidApis = searchParams.get('real') !== 'false';
     
-    // Fetch signals - real from NewsAPI or fallback
-    console.log(`🔍 Scraper running (real=${useRealNews}, force=${forceNew})`);
-    const allSignals = useRealNews ? await fetchRealNews() : fallbackSignals;
+    console.log(`🔍 Multi-source scraper running (paid=${usePaidApis}, force=${forceNew})`);
     
-    // Get all existing signal hashes to filter duplicates
+    // Run all scrapers (Google RSS always, paid APIs conditionally)
+    const report = await runAllScrapers(apiUsage, { usePaidApis });
+    const allSignals = report.signals;
+    
+    console.log(`📡 Sources: ${Object.entries(report.sourceBreakdown).map(([src, info]) => `${src}(${info.count})`).join(', ')}`);
+    
+    // Get existing leads for deduplication
     const existingLeads = await leads.find({}, { projection: { signal_hash: 1, normalized_name: 1 } }).toArray();
     const existingHashes = new Set(existingLeads.map((l: any) => l.signal_hash).filter(Boolean));
     const existingNames = new Set(existingLeads.map((l: any) => l.normalized_name).filter(Boolean));
     
-    // Filter out duplicate signals BEFORE processing
+    // Filter duplicates
     const uniqueSignals = allSignals.filter(signal => {
       const hash = generateSignalHash(signal.company_name, signal.text);
       const canonical = normalizeName(signal.company_name);
       
       if (existingHashes.has(hash)) {
-        console.log(`⏭️ Skipping duplicate signal (hash match): ${signal.company_name}`);
+        console.log(`⏭️ Skipping duplicate (hash): ${signal.company_name}`);
         return false;
       }
       if (existingNames.has(canonical) && !forceNew) {
-        console.log(`⏭️ Skipping duplicate signal (company match): ${signal.company_name}`);
+        console.log(`⏭️ Skipping duplicate (company): ${signal.company_name}`);
         return false;
       }
       return true;
     });
     
-    console.log(`📊 Found ${allSignals.length} signals, ${uniqueSignals.length} are unique`);
+    console.log(`📊 ${allSignals.length} signals total, ${uniqueSignals.length} unique`);
     
     if (uniqueSignals.length === 0) {
+      const apiStats = await getApiUsageStats(apiUsage);
       return NextResponse.json({
         ok: true,
-        message: 'No new unique signals found. All articles already processed.',
+        message: 'No new unique signals found.',
         data: {
           processed: 0,
           newLeads: 0,
           duplicatesSkipped: allSignals.length,
           results: [],
+          sourceBreakdown: report.sourceBreakdown,
+          apiUsage: apiStats,
         },
         timestamp: new Date().toISOString(),
       });
     }
     
-    // Pick 1-3 random UNIQUE signals to process
+    // Pick 1-3 random unique signals to process
     const numSignals = forceNew ? Math.min(3, uniqueSignals.length) : Math.min(Math.floor(Math.random() * 3) + 1, uniqueSignals.length);
     const shuffled = [...uniqueSignals].sort(() => 0.5 - Math.random());
     const signalsToProcess = shuffled.slice(0, numSignals);
@@ -519,24 +315,19 @@ export async function GET(request: NextRequest) {
       const canonical = normalizeName(signal.company_name);
       const signalHash = generateSignalHash(signal.company_name, signal.text);
       
-      // Double check for duplicate (in case of race condition)
+      // Race-condition guard
       const existing = await leads.findOne({ 
-        $or: [
-          { signal_hash: signalHash },
-          { normalized_name: canonical }
-        ]
+        $or: [{ signal_hash: signalHash }, { normalized_name: canonical }]
       });
       
       if (existing && !forceNew) {
-        console.log(`⏭️ Skipping (already exists): ${signal.company_name}`);
         results.push({ company: signal.company_name, action: 'skipped_duplicate', id: existing.id });
         continue;
       }
       
-      // Run AI inference
+      // AI inference
       const inference = await inferProductNeeds(signal.text, signal.company_name);
       
-      // Create new lead with signal hash
       const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
       const newLead: any = {
         id: leadId,
@@ -557,13 +348,13 @@ export async function GET(request: NextRequest) {
         updatedAt: new Date(),
       };
       
-      // Score the lead
+      // Score
       const { score, breakdown, explanation } = scoreLead(newLead);
       newLead.score = score;
       newLead.scoreBreakdown = breakdown;
       newLead.scoreExplanation = explanation;
       
-      // Auto-assign based on region
+      // Auto-assign by region
       const salesUsers = await users.find({ role: 'sales' }).toArray();
       if (salesUsers.length > 0) {
         const matchedUser = salesUsers.find((u: any) => 
@@ -573,48 +364,36 @@ export async function GET(request: NextRequest) {
         newLead.assignedTo = matchedUser?.id || salesUsers[Math.floor(Math.random() * salesUsers.length)].id;
       }
       
-      // Save lead
       await leads.insertOne(newLead);
       newLeadsCreated.push(newLead);
-      
-      // Send notifications to ALL sales users
       await notifyAllSalesUsers(newLead, notifications, users);
       
-      results.push({ company: signal.company_name, action: 'created', id: leadId, score });
+      results.push({ company: signal.company_name, action: 'created', id: leadId, score, source: signal.source });
       
       console.log(`\n${'='.repeat(60)}`);
-      console.log(`🔔 NEW LEAD DETECTED BY SCRAPER`);
-      console.log(`${'='.repeat(60)}`);
-      console.log(`Company: ${newLead.company_name}`);
-      console.log(`Industry: ${newLead.industry}`);
-      console.log(`Score: ${newLead.score}`);
-      console.log(`Products: ${newLead.inference?.inferred_products?.join(', ')}`);
-      console.log(`Urgency: ${newLead.inference?.urgency_level}`);
+      console.log(`🔔 NEW LEAD: ${newLead.company_name} | Score: ${newLead.score} | Source: ${signal.source}`);
+      console.log(`   Products: ${newLead.inference?.inferred_products?.join(', ')}`);
       console.log(`${'='.repeat(60)}\n`);
     }
     
     // Update analytics
     const totalLeads = await leads.countDocuments();
-    const newLeads = await leads.countDocuments({ status: 'new' });
+    const newLeadsCount = await leads.countDocuments({ status: 'new' });
     
     await analytics.updateOne(
       { id: 'main' },
       {
-        $set: {
-          total_leads: totalLeads,
-          new_leads: newLeads,
-          updated_at: new Date(),
-        },
-        $inc: {
-          leads_found_by_scraper: newLeadsCreated.length,
-        }
+        $set: { total_leads: totalLeads, new_leads: newLeadsCount, updated_at: new Date() },
+        $inc: { leads_found_by_scraper: newLeadsCreated.length },
       },
       { upsert: true }
     );
     
+    const apiStats = await getApiUsageStats(apiUsage);
+    
     return NextResponse.json({
       ok: true,
-      message: `Scraper run complete. Created ${newLeadsCreated.length} new leads, skipped ${duplicatesSkipped} duplicates.`,
+      message: `Scraper complete. ${newLeadsCreated.length} new leads from ${Object.keys(report.sourceBreakdown).length} sources.`,
       data: {
         processed: results.length,
         newLeads: newLeadsCreated.length,
@@ -622,6 +401,8 @@ export async function GET(request: NextRequest) {
         totalSignalsFetched: allSignals.length,
         uniqueSignals: uniqueSignals.length,
         highPriorityLeads: newLeadsCreated.filter((l: any) => l.score >= 80).length,
+        sourceBreakdown: report.sourceBreakdown,
+        apiUsage: apiStats,
         results,
       },
       timestamp: new Date().toISOString(),
