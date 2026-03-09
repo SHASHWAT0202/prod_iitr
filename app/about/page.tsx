@@ -1,8 +1,10 @@
 ﻿'use client';
 
 import { motion } from 'framer-motion';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import dynamic from 'next/dynamic';
+
+const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: true });
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: true });
 
 // Icon components for team section
 const TeamIcon = ({ type }: { type: 'building' | 'brain' | 'chart' }) => {
@@ -100,21 +102,21 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-white">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-6xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              About <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">LeadSense AI</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4 sm:mb-6">
+              About <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">LeadSense AI</span>
             </h1>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto px-2">
               Transforming B2B lead generation for HPCL Direct Sales with cutting-edge 
               artificial intelligence and real-time market intelligence.
             </p>
@@ -123,45 +125,45 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Section */}
-      <section className="py-20 px-6 bg-slate-800/50">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="grid md:grid-cols-2 gap-12 items-center"
+            className="grid md:grid-cols-2 gap-8 md:gap-12 items-center"
           >
             <div>
-              <h2 className="text-3xl font-bold text-white mb-6">Our Mission</h2>
-              <p className="text-slate-300 text-lg leading-relaxed mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4 sm:mb-6">Our Mission</h2>
+              <p className="text-slate-600 text-lg leading-relaxed mb-6">
                 At LeadSense AI, we believe that the future of B2B sales lies in intelligent automation. 
                 Our mission is to empower HPCL's direct sales team with AI-driven insights that transform 
                 raw market signals into actionable business opportunities.
               </p>
-              <p className="text-slate-300 text-lg leading-relaxed">
+              <p className="text-slate-600 text-lg leading-relaxed">
                 By combining advanced natural language processing with deep industry knowledge, we help 
                 sales teams focus on what matters most - building relationships and closing deals.
               </p>
             </div>
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-600/20 rounded-3xl blur-3xl" />
-              <div className="relative bg-slate-900/50 border border-slate-700 rounded-2xl p-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-700/10 rounded-3xl blur-3xl" />
+              <div className="relative bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
                 <div className="grid grid-cols-2 gap-6 text-center">
                   <div>
-                    <div className="text-4xl font-bold text-orange-500 mb-2">95%</div>
-                    <div className="text-slate-400">Accuracy Rate</div>
+                    <div className="text-4xl font-bold text-blue-700 mb-2">95%</div>
+                    <div className="text-slate-500">Accuracy Rate</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-orange-500 mb-2">10x</div>
-                    <div className="text-slate-400">Faster Processing</div>
+                    <div className="text-4xl font-bold text-blue-700 mb-2">10x</div>
+                    <div className="text-slate-500">Faster Processing</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-orange-500 mb-2">500+</div>
-                    <div className="text-slate-400">Daily Signals</div>
+                    <div className="text-4xl font-bold text-blue-700 mb-2">500+</div>
+                    <div className="text-slate-500">Daily Signals</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-orange-500 mb-2">24/7</div>
-                    <div className="text-slate-400">Monitoring</div>
+                    <div className="text-4xl font-bold text-blue-700 mb-2">24/7</div>
+                    <div className="text-slate-500">Monitoring</div>
                   </div>
                 </div>
               </div>
@@ -171,7 +173,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-20 px-6">
+      <section className="py-12 sm:py-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -179,13 +181,13 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-white mb-4">Our Core Values</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Our Core Values</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto">
               The principles that guide everything we build
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {values.map((value, i) => (
               <motion.div
                 key={value.title}
@@ -193,13 +195,13 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center hover:border-orange-500/50 transition-colors group"
+                className="bg-white border border-slate-200 rounded-xl p-6 text-center hover:border-blue-500/50 transition-colors group shadow-sm"
               >
-                <div className="mb-4 text-orange-500 flex justify-center group-hover:scale-110 transition-transform">
+                <div className="mb-4 text-blue-600 flex justify-center group-hover:scale-110 transition-transform">
                   <ValueIcon type={value.iconType} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{value.title}</h3>
-                <p className="text-slate-400 text-sm">{value.description}</p>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">{value.title}</h3>
+                <p className="text-slate-500 text-sm">{value.description}</p>
               </motion.div>
             ))}
           </div>
@@ -207,7 +209,7 @@ export default function AboutPage() {
       </section>
 
       {/* Timeline Section */}
-      <section className="py-20 px-6 bg-slate-800/50">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -215,12 +217,13 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-white mb-4">Our Journey</h2>
-            <p className="text-slate-400">Building the future of B2B sales intelligence</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Our Journey</h2>
+            <p className="text-slate-500">Building the future of B2B sales intelligence</p>
           </motion.div>
 
-          <div className="relative">
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-gradient-to-b from-orange-500 to-red-600" />
+          {/* Desktop timeline */}
+          <div className="hidden md:block relative">
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-gradient-to-b from-blue-600 to-blue-700" />
             {milestones.map((milestone, i) => (
               <motion.div
                 key={i}
@@ -231,13 +234,35 @@ export default function AboutPage() {
                 className={`relative flex items-center mb-8 ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}
               >
                 <div className={`w-5/12 ${i % 2 === 0 ? 'text-right pr-8' : 'text-left pl-8'}`}>
-                  <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4">
-                    <div className="text-orange-500 font-bold mb-1">{milestone.year}</div>
-                    <div className="text-white font-semibold">{milestone.event}</div>
-                    <div className="text-slate-400 text-sm">{milestone.description}</div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div className="text-blue-600 font-bold mb-1">{milestone.year}</div>
+                    <div className="text-slate-900 font-semibold">{milestone.event}</div>
+                    <div className="text-slate-500 text-sm">{milestone.description}</div>
                   </div>
                 </div>
-                <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-orange-500 rounded-full border-4 border-slate-900" />
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-blue-600 rounded-full border-4 border-white" />
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mobile timeline (stacked) */}
+          <div className="md:hidden relative pl-8">
+            <div className="absolute left-3 top-0 h-full w-0.5 bg-gradient-to-b from-blue-600 to-blue-700" />
+            {milestones.map((milestone, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="relative mb-6"
+              >
+                <div className="absolute -left-[23px] top-4 w-3.5 h-3.5 bg-blue-600 rounded-full border-4 border-white" />
+                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <div className="text-blue-600 font-bold mb-1">{milestone.year}</div>
+                  <div className="text-slate-900 font-semibold">{milestone.event}</div>
+                  <div className="text-slate-500 text-sm">{milestone.description}</div>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -245,7 +270,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team/Technology Section */}
-      <section className="py-20 px-6">
+      <section className="py-12 sm:py-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -253,8 +278,8 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-white mb-4">Our Technology Stack</h2>
-            <p className="text-slate-400">Powered by industry-leading technologies</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Our Technology Stack</h2>
+            <p className="text-slate-500">Powered by industry-leading technologies</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -265,14 +290,14 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center group hover:border-orange-500/50 transition-all"
+                className="bg-white border border-slate-200 rounded-xl p-6 text-center group hover:border-blue-500/50 transition-all shadow-sm"
               >
-                <div className="mb-4 text-orange-500 flex justify-center group-hover:scale-110 transition-transform">
+                <div className="mb-4 text-blue-600 flex justify-center group-hover:scale-110 transition-transform">
                   <TeamIcon type={member.iconType} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-1">{member.name}</h3>
-                <p className="text-orange-500 text-sm mb-3">{member.role}</p>
-                <p className="text-slate-400 text-sm">{member.description}</p>
+                <h3 className="text-xl font-semibold text-slate-900 mb-1">{member.name}</h3>
+                <p className="text-blue-600 text-sm mb-3">{member.role}</p>
+                <p className="text-slate-500 text-sm">{member.description}</p>
               </motion.div>
             ))}
           </div>
@@ -280,22 +305,22 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6">
+      <section className="py-12 sm:py-20 px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center bg-gradient-to-r from-orange-500/10 to-red-600/10 rounded-3xl p-12 border border-orange-500/20"
+          className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-blue-200"
         >
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
             Ready to Transform Your Sales?
           </h2>
-          <p className="text-slate-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-slate-600 mb-8 max-w-2xl mx-auto">
             Join HPCL's digital transformation journey with LeadSense AI.
           </p>
           <a
             href="/login"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-600/25 transition-all"
           >
             Get Started Today
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

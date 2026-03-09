@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import dynamic from 'next/dynamic';
+
+const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: true });
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: true });
 
 // Contact icon component
 const ContactIcon = ({ type }: { type: 'location' | 'phone' | 'email' }) => {
@@ -83,21 +85,21 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-white">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6">
+      <section className="pt-24 sm:pt-32 pb-10 sm:pb-16 px-4 sm:px-6 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-6xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Get in <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Touch</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4 sm:mb-6">
+              Get in <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">Touch</span>
             </h1>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto px-2">
               Have questions about LeadSense AI? Our team is here to help you 
               transform your B2B sales pipeline.
             </p>
@@ -106,23 +108,23 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Info Cards */}
-      <section className="py-12 px-6">
+      <section className="py-8 sm:py-12 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {contactInfo.map((info, i) => (
               <motion.div
                 key={info.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center hover:border-orange-500/50 transition-colors group"
+                className="bg-white border border-slate-200 rounded-xl p-6 text-center hover:border-blue-500/50 transition-colors group shadow-sm"
               >
-                <div className="mb-4 text-orange-500 flex justify-center group-hover:scale-110 transition-transform">
+                <div className="mb-4 text-blue-600 flex justify-center group-hover:scale-110 transition-transform">
                   <ContactIcon type={info.iconType} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{info.title}</h3>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">{info.title}</h3>
                 {info.details.map((detail, j) => (
-                  <p key={j} className="text-slate-400 text-sm">{detail}</p>
+                  <p key={j} className="text-slate-500 text-sm">{detail}</p>
                 ))}
               </motion.div>
             ))}
@@ -131,48 +133,48 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form & Map */}
-      <section className="py-12 px-6">
+      <section className="py-8 sm:py-12 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Contact Form */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-2xl font-bold text-white mb-6">Send us a Message</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Send us a Message</h2>
               
               {submitted && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg"
+                  className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg"
                 >
-                  ✅ Thank you! We'll get back to you within 24 hours.
+                  ✅ Thank you! We&apos;ll get back to you within 24 hours.
                 </motion.div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Full Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
                       placeholder="John Doe"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Email *</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
                       placeholder="john@company.com"
                     />
                   </div>
@@ -180,34 +182,34 @@ export default function ContactPage() {
 
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Company</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Company</label>
                     <input
                       type="text"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
                       placeholder="Your Company"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Phone</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
                       placeholder="+91 98765 43210"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Subject *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Subject *</label>
                   <select
                     required
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
                   >
                     <option value="">Select a topic</option>
                     <option value="demo">Request a Demo</option>
@@ -219,13 +221,13 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Message *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Message *</label>
                   <textarea
                     required
                     rows={5}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors resize-none"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors resize-none"
                     placeholder="Tell us how we can help..."
                   />
                 </div>
@@ -234,7 +236,7 @@ export default function ContactPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-orange-500/25 transition-all flex items-center justify-center gap-2"
+                  className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
                 >
                   Send Message
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,69 +253,69 @@ export default function ContactPage() {
               viewport={{ once: true }}
               className="space-y-6"
             >
-              <h2 className="text-2xl font-bold text-white mb-6">Our Office</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Our Office</h2>
               
               {/* Map Placeholder */}
-              <div className="relative h-64 bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+              <div className="relative h-64 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-orange-500 mb-2">
+                    <div className="text-blue-600 mb-2">
                       <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
                     </div>
-                    <p className="text-slate-400">Mumbai, Maharashtra</p>
+                    <p className="text-slate-500">Mumbai, Maharashtra</p>
                   </div>
                 </div>
                 {/* Grid overlay for visual effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-600/5" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-blue-700/5" />
                 <div className="absolute inset-0" style={{
-                  backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
+                  backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)',
                   backgroundSize: '20px 20px'
                 }} />
               </div>
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <a
                   href="tel:18002333555"
-                  className="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl hover:border-orange-500/50 transition-colors"
+                  className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-500/50 transition-colors shadow-sm"
                 >
                   <span className="text-2xl">📞</span>
                   <div>
-                    <p className="text-white font-medium">Call Now</p>
-                    <p className="text-slate-400 text-sm">Toll Free</p>
+                    <p className="text-slate-900 font-medium">Call Now</p>
+                    <p className="text-slate-500 text-sm">Toll Free</p>
                   </div>
                 </a>
                 <a
                   href="mailto:sales@leadsense.ai"
-                  className="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl hover:border-orange-500/50 transition-colors"
+                  className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-500/50 transition-colors shadow-sm"
                 >
                   <span className="text-2xl">📧</span>
                   <div>
-                    <p className="text-white font-medium">Email</p>
-                    <p className="text-slate-400 text-sm">Quick Response</p>
+                    <p className="text-slate-900 font-medium">Email</p>
+                    <p className="text-slate-500 text-sm">Quick Response</p>
                   </div>
                 </a>
               </div>
 
               {/* Business Hours */}
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <span>🕐</span> Business Hours
                 </h3>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Monday - Friday</span>
-                    <span className="text-white">9:00 AM - 6:00 PM</span>
+                    <span className="text-slate-500">Monday - Friday</span>
+                    <span className="text-slate-900">9:00 AM - 6:00 PM</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Saturday</span>
-                    <span className="text-white">10:00 AM - 4:00 PM</span>
+                    <span className="text-slate-500">Saturday</span>
+                    <span className="text-slate-900">10:00 AM - 4:00 PM</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Sunday</span>
-                    <span className="text-orange-500">Closed</span>
+                    <span className="text-slate-500">Sunday</span>
+                    <span className="text-blue-600">Closed</span>
                   </div>
                 </div>
               </div>
@@ -323,7 +325,7 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 px-6 bg-slate-800/50">
+      <section className="py-10 sm:py-16 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -331,8 +333,8 @@ export default function ContactPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-white mb-4">Frequently Asked Questions</h2>
-            <p className="text-slate-400">Quick answers to common questions</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-slate-500">Quick answers to common questions</p>
           </motion.div>
 
           <div className="space-y-4">
@@ -343,16 +345,16 @@ export default function ContactPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-slate-900/50 border border-slate-700 rounded-xl overflow-hidden"
+                className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm"
               >
                 <button
                   onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                   className="w-full flex items-center justify-between p-5 text-left"
                 >
-                  <span className="font-medium text-white">{faq.question}</span>
+                  <span className="font-medium text-slate-900">{faq.question}</span>
                   <motion.span
                     animate={{ rotate: expandedFaq === i ? 180 : 0 }}
-                    className="text-orange-500"
+                    className="text-blue-600"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -364,7 +366,7 @@ export default function ContactPage() {
                   animate={{ height: expandedFaq === i ? 'auto' : 0, opacity: expandedFaq === i ? 1 : 0 }}
                   className="overflow-hidden"
                 >
-                  <p className="px-5 pb-5 text-slate-400">{faq.answer}</p>
+                  <p className="px-5 pb-5 text-slate-600">{faq.answer}</p>
                 </motion.div>
               </motion.div>
             ))}

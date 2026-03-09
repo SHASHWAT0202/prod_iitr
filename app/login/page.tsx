@@ -392,20 +392,20 @@ export default function LoginPage() {
                 </form>
 
                 {/* Notification preferences */}
-                <div className="pt-6 border-t border-white/10">
-                  <h4 className="text-sm font-medium mb-3">Notification Preferences</h4>
+                <div className="pt-6 border-t border-slate-200">
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">Notification Preferences</h4>
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-white/20 bg-white/5 text-orange-500 focus:ring-orange-500" />
-                      <span className="text-sm text-gray-400">📧 Email notifications for high-priority leads</span>
+                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm text-slate-500">📧 Email notifications for high-priority leads</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-white/20 bg-white/5 text-orange-500 focus:ring-orange-500" />
-                      <span className="text-sm text-gray-400">🔔 Browser push notifications</span>
+                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm text-slate-500">🔔 Browser push notifications</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 rounded border-white/20 bg-white/5 text-orange-500 focus:ring-orange-500" />
-                      <span className="text-sm text-gray-400">📱 WhatsApp alerts (optional)</span>
+                      <input type="checkbox" className="w-4 h-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm text-slate-500">📱 WhatsApp alerts (optional)</span>
                     </label>
                   </div>
                 </div>

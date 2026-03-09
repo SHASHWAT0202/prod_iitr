@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { getCollections, initializeDatabase } from '@/lib/mongodb';
 import { inferProductNeeds } from '@/lib/openai';
 import { scoreLead, scoreLeadWithLearning, shouldNotifyUrgent, normalizeName, getLearnedWeightsFromDb } from '@/lib/scoring';
+import { generateHighPriorityLeadEmail } from '@/lib/email-templates';
 import nodemailer from 'nodemailer';
 
 // Email transporter configuration
@@ -53,53 +54,7 @@ async function sendLeadNotificationEmail(lead: any, user: any) {
   }
 
   const dsRegion = getDSRegion(lead.geo || 'Pan India');
-  const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/images.jpg`;
-
-  const emailHtml = `
-    <div style="font-family: 'Courier New', Consolas, monospace; max-width: 700px; margin: 0 auto; background: #1a1a2e; color: #eaeaea; padding: 0;">
-      <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 20px; text-align: center;">
-        <img src="${logoUrl}" alt="HPCL" style="height: 50px; margin-bottom: 10px; border-radius: 8px;" />
-        <h1 style="color: white; margin: 0; font-family: Arial, sans-serif;">🔥 NEW HIGH PRIORITY LEAD</h1>
-      </div>
-      <div style="padding: 30px; background: #16213e;">
-        <div style="background: #0f0f23; padding: 25px; border-radius: 8px; border: 1px solid #333;">
-          <pre style="margin: 0; font-size: 14px; line-height: 1.8; color: #00ff00; white-space: pre-wrap; word-wrap: break-word;">===== FINAL LEAD OBJECT =====
-
-company_name: ${lead.company_name}
-industry: ${lead.industry || 'N/A'}
-state: ${lead.geo || 'India'}
-activity: ${lead.source_text?.substring(0, 200) || 'N/A'}
-products: [${lead.inference?.inferred_products?.map((p: string) => `'${p}'`).join(', ') || ''}]
-reasons: [${lead.inference?.reason_codes?.map((r: string) => `'${r}'`).join(', ') || ''}]
-confidence: ${Math.round((lead.inference?.confidence_score || 0) * 100)}
-score: ${lead.score}
-urgency: ${lead.inference?.urgency_level?.charAt(0).toUpperCase() + lead.inference?.urgency_level?.slice(1) || 'High'}
-assigned_region: ${dsRegion}
-next_action: ${lead.inference?.suggested_next_action || 'Contact procurement manager'}
-
-=============================</pre>
-        </div>
-        
-        <div style="text-align: center; margin-top: 25px;">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/leads/${lead.id}" 
-             style="display: inline-block; background: #dc2626; color: white; padding: 14px 28px; 
-                    text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; margin-right: 10px; font-family: Arial, sans-serif;">
-            🔍 View Lead
-          </a>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" 
-             style="display: inline-block; background: #4a5568; color: white; padding: 14px 28px; 
-                    text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; font-family: Arial, sans-serif;">
-            📊 Dashboard
-          </a>
-        </div>
-      </div>
-      <div style="padding: 15px; text-align: center; background: #0f0f23; border-top: 1px solid #333;">
-        <img src="${logoUrl}" alt="HPCL" style="height: 30px; margin-bottom: 8px; border-radius: 4px;" />
-        <p style="color: #f97316; font-weight: bold; margin: 0; font-family: Arial, sans-serif; font-size: 13px;">HPCL Direct Sales - B2B Lead Intelligence</p>
-        <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 11px; font-family: Arial, sans-serif;">Powered by AI • Real-time Lead Detection</p>
-      </div>
-    </div>
-  `;
+  const emailHtml = generateHighPriorityLeadEmail(lead, dsRegion);
 
   try {
     const info = await transporter.sendMail({

@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCollections, initializeDatabase } from '@/lib/mongodb';
+import { generateNotificationEmail } from '@/lib/email-templates';
 import nodemailer from 'nodemailer';
 
 // Email transporter configuration
@@ -103,34 +104,7 @@ export async function POST(req: Request) {
 
     // Send real email notification
     if (channel === 'email' && userEmail) {
-      const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">🔥 HPCL Lead Intelligence</h1>
-          </div>
-          <div style="padding: 30px; background: #f9fafb;">
-            <h2 style="color: #1f2937;">${notification.title}</h2>
-            <p style="color: #4b5563; font-size: 16px;">${notification.message}</p>
-            ${lead ? `
-              <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #f97316; margin-top: 0;">Lead Details</h3>
-                <p><strong>Company:</strong> ${lead.company_name}</p>
-                <p><strong>Industry:</strong> ${lead.industry}</p>
-                <p><strong>Score:</strong> ${lead.score}/100</p>
-                <p><strong>Urgency:</strong> ${lead.urgency}</p>
-              </div>
-            ` : ''}
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" 
-               style="display: inline-block; background: #f97316; color: white; padding: 12px 24px; 
-                      text-decoration: none; border-radius: 6px; font-weight: bold;">
-              View Dashboard
-            </a>
-          </div>
-          <div style="padding: 20px; text-align: center; color: #6b7280; font-size: 12px;">
-            <p>HPCL Direct Sales - B2B Lead Intelligence Platform</p>
-          </div>
-        </div>
-      `;
+      const emailHtml = generateNotificationEmail(notification, lead);
 
       await sendEmail(
         userEmail,
