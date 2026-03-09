@@ -197,3 +197,40 @@ export interface LearningStats {
   version: number;
   recentTrend: 'improving' | 'stable' | 'declining' | 'unknown';
 }
+
+// Competitor monitoring types
+export type CompetitorName = 'IOCL' | 'BPCL' | 'Reliance' | 'Shell' | 'Nayara' | 'Other';
+
+export type CompetitorActivityType = 
+  | 'infrastructure_expansion'
+  | 'ev_charging'
+  | 'hydrogen'
+  | 'partnership'
+  | 'govt_contract'
+  | 'technology'
+  | 'acquisition'
+  | 'new_plant'
+  | 'pricing'
+  | 'retail_expansion'
+  | 'green_energy'
+  | 'supply_chain'
+  | 'other';
+
+export type CompetitorImpactLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export interface CompetitorSignal {
+  _id?: string;
+  id: string;
+  competitor: CompetitorName;
+  activityType: CompetitorActivityType;
+  strategicCategory: string;
+  title: string;
+  summary: string;
+  source: string;
+  sourceUrl: string;
+  geo: string;
+  impactLevel: CompetitorImpactLevel;
+  hpclImplication: string;
+  signalHash: string;
+  createdAt: Date;
+}

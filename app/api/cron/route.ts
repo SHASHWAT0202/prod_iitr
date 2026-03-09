@@ -24,23 +24,31 @@ export async function GET(request: NextRequest) {
   // }
   
   try {
-    // Call the scraper endpoint
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/scraper`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
     
-    const data = await response.json();
+    // Run lead scraper and competitor scraper in parallel
+    const [scraperRes, competitorRes] = await Promise.all([
+      fetch(`${baseUrl}/api/scraper`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      fetch(`${baseUrl}/api/competitors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ]);
     
-    console.log(`[CRON] Scraper run at ${new Date().toISOString()}:`, data);
+    const scraperData = await scraperRes.json();
+    const competitorData = await competitorRes.json();
+    
+    console.log(`[CRON] Scraper run at ${new Date().toISOString()}:`, scraperData);
+    console.log(`[CRON] Competitor scan at ${new Date().toISOString()}:`, competitorData);
     
     return NextResponse.json({
       ok: true,
       message: 'Cron job executed successfully',
-      scraper_result: data,
+      scraper_result: scraperData,
+      competitor_result: competitorData,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
