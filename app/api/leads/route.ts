@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollections, initializeDatabase } from '@/lib/mongodb';
 import { checkRateLimit, rateLimitConfigs } from '@/lib/rate-limit';
+import { scoreLead } from '@/lib/scoring';
 
 interface ApiResponse {
   ok: boolean;
@@ -83,6 +84,22 @@ export async function GET(request: NextRequest) {
       .sort({ [sortBy]: sortOrder })
       .limit(limit)
       .toArray();
+
+    // Auto-rescore leads that have score=100 (from the old broken scoring engine)
+    const staleLeads = result.filter((l: any) => l.score === 100 && l.source_text);
+    if (staleLeads.length > 0) {
+      for (const lead of staleLeads) {
+        const { score, breakdown, explanation } = scoreLead(lead as any);
+        lead.score = score;
+        lead.scoreBreakdown = breakdown;
+        lead.scoreExplanation = explanation;
+        // Update in DB asynchronously (fire-and-forget)
+        leads.updateOne(
+          { id: lead.id },
+          { $set: { score, scoreBreakdown: breakdown, scoreExplanation: explanation, updatedAt: new Date() } }
+        ).catch(() => {});
+      }
+    }
 
     return createResponse(
       { ok: true, data: result },

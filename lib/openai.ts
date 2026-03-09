@@ -136,6 +136,7 @@ function mockInference(text: string, company_name: string): InferenceResult {
     road: 'Infrastructure', hotel: 'Hospitality', food: 'Food Processing',
     logistics: 'Logistics', fleet: 'Transportation', mining: 'Mining',
     power: 'Power & Utilities', metro: 'Transportation', shipping: 'Marine',
+    aviation: 'Aviation', aircraft: 'Aviation', port: 'Marine', ship: 'Marine',
   };
 
   for (const [keyword, ind] of Object.entries(industryMap)) {
@@ -145,12 +146,26 @@ function mockInference(text: string, company_name: string): InferenceResult {
     }
   }
 
+  // Compute varied confidence based on signal quality
+  let confidence = 0.45; // base
+  if (matchedProducts.length >= 3) confidence += 0.20;
+  else if (matchedProducts.length >= 2) confidence += 0.12;
+  else if (matchedProducts.length >= 1) confidence += 0.06;
+  if (urgency === 'high') confidence += 0.12;
+  else if (urgency === 'medium') confidence += 0.05;
+  if (industry !== 'General Business') confidence += 0.10;
+  // Add slight variation so leads aren't identical
+  const nameHash = company_name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  confidence += (nameHash % 10) * 0.01;
+  confidence = Math.min(0.92, Math.max(0.35, confidence));
+  confidence = Math.round(confidence * 100) / 100;
+
   return {
     company_name,
     industry,
     inferred_products: matchedProducts,
     reason_codes: reasonCodes,
-    confidence_score: 0.75,
+    confidence_score: confidence,
     urgency_level: urgency,
     suggested_next_action: `Contact ${company_name} procurement team to discuss ${matchedProducts[0]} supply requirements.`,
   };

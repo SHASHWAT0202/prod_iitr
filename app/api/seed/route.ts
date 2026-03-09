@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
+import { scoreLead } from '@/lib/scoring';
 
 // Prevent this route from being executed at build time
 export const dynamic = 'force-dynamic';
@@ -48,54 +49,48 @@ const leads = [
     id: 'lead_001', company_name: 'Tata Steel Limited', normalized_name: 'tatasteel', industry: 'Steel Manufacturing',
     source: 'Economic Times', source_type: 'news',
     source_text: 'Tata Steel announces major expansion of Kalinganagar plant with investment of ₹12,000 crore.',
-    timestamp: Date.now() - 2 * 60 * 60 * 1000, trust: 95, geo: 'Odisha', status: 'new', score: 87,
-    scoreBreakdown: { intentStrength: 32, freshness: 20, companySizeProxy: 18, trustScore: 14, geographyMatch: 3 },
-    inference: { industry: 'Steel Manufacturing', inferred_products: ['HP Lube - Industrial Gear Oil', 'HP Diesel - HSD', 'HP Furnace Oil'], confidence_score: 0.92, urgency_level: 'high', suggested_next_action: 'Schedule meeting immediately' },
-    assignedTo: 'sales_003', createdAt: new Date(), updatedAt: new Date()
+    timestamp: Date.now() - 2 * 60 * 60 * 1000, trust: 95, geo: 'Odisha', status: 'new',
+    inference: { industry: 'Steel Manufacturing', inferred_products: ['HP Lube - Industrial Gear Oil', 'HP Diesel - HSD', 'HP Furnace Oil'], confidence_score: 0.82, urgency_level: 'high', suggested_next_action: 'Schedule meeting immediately', company_name: 'Tata Steel Limited', reason_codes: ['Steel plant expansion requires industrial lubricants', 'Heavy machinery diesel needs', 'Furnace operations for steel production'] },
+    assignedTo: 'sales_004', createdAt: new Date(), updatedAt: new Date()
   },
   {
     id: 'lead_002', company_name: 'Reliance Logistics', normalized_name: 'reliancelogistics', industry: 'Transportation',
     source: 'Business Standard', source_type: 'news',
     source_text: 'Reliance Logistics expanding fleet by 500 trucks for e-commerce delivery network.',
-    timestamp: Date.now() - 5 * 60 * 60 * 1000, trust: 90, geo: 'Mumbai', status: 'new', score: 82,
-    scoreBreakdown: { intentStrength: 30, freshness: 18, companySizeProxy: 17, trustScore: 13, geographyMatch: 4 },
-    inference: { industry: 'Transportation', inferred_products: ['HP Diesel - HSD', 'HP Lube - Industrial Gear Oil'], confidence_score: 0.88, urgency_level: 'high', suggested_next_action: 'Prepare bulk supply proposal' },
+    timestamp: Date.now() - 5 * 60 * 60 * 1000, trust: 90, geo: 'Mumbai', status: 'new',
+    inference: { industry: 'Transportation', inferred_products: ['HP Diesel - HSD', 'HP Lube - Industrial Gear Oil'], confidence_score: 0.76, urgency_level: 'high', suggested_next_action: 'Prepare bulk supply proposal', company_name: 'Reliance Logistics', reason_codes: ['Fleet expansion requires diesel supply', 'Vehicle maintenance needs lubricants'] },
     assignedTo: 'sales_002', createdAt: new Date(), updatedAt: new Date()
   },
   {
     id: 'lead_003', company_name: 'DLF Construction', normalized_name: 'dlfconstruction', industry: 'Construction',
     source: 'Government Tender Portal', source_type: 'tender',
     source_text: 'DLF awarded ₹2,500 crore highway construction contract in Gujarat.',
-    timestamp: Date.now() - 24 * 60 * 60 * 1000, trust: 98, geo: 'Gujarat', status: 'in_progress', score: 91,
-    scoreBreakdown: { intentStrength: 35, freshness: 17, companySizeProxy: 19, trustScore: 15, geographyMatch: 5 },
-    inference: { industry: 'Construction', inferred_products: ['HP Bitumen', 'HP Diesel - HSD'], confidence_score: 0.95, urgency_level: 'high', suggested_next_action: 'Submit tender response' },
+    timestamp: Date.now() - 24 * 60 * 60 * 1000, trust: 98, geo: 'Gujarat', status: 'in_progress',
+    inference: { industry: 'Construction', inferred_products: ['HP Bitumen', 'HP Diesel - HSD'], confidence_score: 0.88, urgency_level: 'high', suggested_next_action: 'Submit tender response', company_name: 'DLF Construction', reason_codes: ['Highway construction requires bitumen', 'Construction equipment needs diesel'] },
     assignedTo: 'sales_002', note: 'Meeting scheduled for next week', createdAt: new Date(), updatedAt: new Date()
   },
   {
     id: 'lead_004', company_name: 'Taj Hotels', normalized_name: 'tajhotels', industry: 'Hospitality',
     source: 'Hospitality Biz', source_type: 'news',
     source_text: 'Taj Hotels planning 15 new properties across tier-2 cities with full-service kitchens.',
-    timestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, trust: 85, geo: 'Pan India', status: 'new', score: 68,
-    scoreBreakdown: { intentStrength: 22, freshness: 12, companySizeProxy: 16, trustScore: 12, geographyMatch: 6 },
-    inference: { industry: 'Hospitality', inferred_products: ['HP LPG - Industrial'], confidence_score: 0.78, urgency_level: 'medium', suggested_next_action: 'Contact procurement for LPG partnership' },
+    timestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, trust: 85, geo: 'Pan India', status: 'new',
+    inference: { industry: 'Hospitality', inferred_products: ['HP LPG - Industrial'], confidence_score: 0.62, urgency_level: 'medium', suggested_next_action: 'Contact procurement for LPG partnership', company_name: 'Taj Hotels', reason_codes: ['Hotel kitchens require industrial LPG supply'] },
     assignedTo: 'sales_001', createdAt: new Date(), updatedAt: new Date()
   },
   {
     id: 'lead_005', company_name: 'SpiceJet Airways', normalized_name: 'spicejet', industry: 'Aviation',
     source: 'Aviation Weekly', source_type: 'news',
     source_text: 'SpiceJet fleet expansion with 20 additional aircraft. Seeking ATF supply contracts.',
-    timestamp: Date.now() - 12 * 60 * 60 * 1000, trust: 88, geo: 'Delhi', status: 'new', score: 79,
-    scoreBreakdown: { intentStrength: 28, freshness: 18, companySizeProxy: 16, trustScore: 13, geographyMatch: 4 },
-    inference: { industry: 'Aviation', inferred_products: ['HP Aviation Fuel - ATF'], confidence_score: 0.85, urgency_level: 'high', suggested_next_action: 'Contact aviation fuel division' },
+    timestamp: Date.now() - 12 * 60 * 60 * 1000, trust: 88, geo: 'Delhi', status: 'new',
+    inference: { industry: 'Aviation', inferred_products: ['HP Aviation Fuel - ATF'], confidence_score: 0.71, urgency_level: 'high', suggested_next_action: 'Contact aviation fuel division', company_name: 'SpiceJet Airways', reason_codes: ['Fleet expansion creates ATF demand'] },
     assignedTo: 'sales_001', createdAt: new Date(), updatedAt: new Date()
   },
   {
     id: 'lead_006', company_name: 'Chennai Metro Rail', normalized_name: 'chennaimetro', industry: 'Infrastructure',
     source: 'Chennai Metro Portal', source_type: 'tender',
     source_text: 'Chennai Metro Phase 2 expansion - seeking fuel and lubricant suppliers.',
-    timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000, trust: 92, geo: 'Tamil Nadu', status: 'converted', score: 88,
-    scoreBreakdown: { intentStrength: 33, freshness: 10, companySizeProxy: 17, trustScore: 14, geographyMatch: 10 },
-    inference: { industry: 'Infrastructure', inferred_products: ['HP Diesel - HSD', 'HP Lube - Industrial Gear Oil'], confidence_score: 0.91, urgency_level: 'medium', suggested_next_action: 'N/A - Converted' },
+    timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000, trust: 92, geo: 'Tamil Nadu', status: 'converted',
+    inference: { industry: 'Infrastructure', inferred_products: ['HP Diesel - HSD', 'HP Lube - Industrial Gear Oil'], confidence_score: 0.79, urgency_level: 'medium', suggested_next_action: 'N/A - Converted', company_name: 'Chennai Metro Rail', reason_codes: ['Construction equipment needs diesel', 'Machinery maintenance requires lubricants'] },
     assignedTo: 'sales_003', note: '🎉 Contract signed for 2 years!', createdAt: new Date(), updatedAt: new Date()
   },
 ];
@@ -144,10 +139,16 @@ export async function GET() {
     await db.collection('users').createIndex({ email: 1 }, { unique: true });
     await db.collection('notifications').createIndex({ userId: 1, read: 1 });
 
+    // Score each lead using the scoring engine before inserting
+    const scoredLeads = leads.map(lead => {
+      const { score, breakdown, explanation } = scoreLead(lead as any);
+      return { ...lead, score, scoreBreakdown: breakdown, scoreExplanation: explanation };
+    });
+
     // Insert data
     await db.collection('users').insertMany(users);
     await db.collection('products').insertMany(products);
-    await db.collection('leads').insertMany(leads);
+    await db.collection('leads').insertMany(scoredLeads);
     await db.collection('notifications').insertMany(notifications);
     await db.collection('scraper_config').insertOne(scraperConfig);
     await db.collection('analytics').insertOne({
